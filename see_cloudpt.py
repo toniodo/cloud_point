@@ -1,5 +1,7 @@
 import open3d as o3d
 import numpy as np
+from sklearn.neighbors import KDTree
+from operator import itemgetter
 import os
 import struct
 from numpy.linalg import eig
@@ -9,8 +11,8 @@ import time
 st = time.time()
 
 #Select file
-path = os.path.join(os.path.expanduser('~'), 'Documents', 'kitti', 'dataset','sequences','04','velodyne')
-filename= "000000.bin"
+path = os.path.join(os.path.expanduser('~'), 'Documents', 'kitti', 'dataset','sequences','00','velodyne')
+filename= "000004.bin"
 
 size_float = 4
 list_pcd = []
@@ -30,11 +32,13 @@ v3d = o3d.utility.Vector3dVector
 pcd.points = v3d(np_pcd)
 o3d.io.write_point_cloud("pcd_files/cloud_point.pcd", pcd)
 
+# Build a KDTree
+tree = KDTree(np_pcd)
 
 # Normal is calculated using PCA
-def cal_normal(index_pt,points):
+def cal_normal(index_pt,points,index_neigh):
     current_point = points[index_pt]
-    neighboors = np.concatenate((points[0:index_pt],points[(index_pt+1):]))
+    neighboors = list(itemgetter(*index_neigh)(points))
     # Calculate the covariance matrix
     M = np.cov(np.transpose(neighboors))
     l,w = eig(M)
@@ -48,19 +52,22 @@ def cal_normal(index_pt,points):
     else:
         return normal_raw/np.linalg.norm(normal_raw)
 
-def normal_cloud(cloud_points, nb_neighbor):
+def normal_cloud(cloud_points,list_index_neigh):
     normal_vects = []
-    for i in range(len(np_pcd)-nb_neighbor-1):
-        normal_vects.append(cal_normal(0, cloud_points[i:i+nb_neighbor+1]))
+    for i in range(len(cloud_points)):
+        index_neigh = list_index_neigh[i]
+        normal_vects.append(cal_normal(i,cloud_points,index_neigh))
     return normal_vects
 
-# Define the list of normal vector
-nb_neighbor = 8
-list_normal = normal_cloud(np_pcd,nb_neighbor)
+# Define the number of neighboor to look at
+nb_neighboor = 8
+# Query in the tree the nearest neighboors
+list_index_neigh=tree.query(np_pcd,k=nb_neighboor, return_distance=False)
+list_normal = normal_cloud(np_pcd,list_index_neigh)
 U,V,W= zip(*list_normal)
 
 # Define the origin of points
-X,Y,Z = zip(*np_pcd[:-(nb_neighbor+1)])
+X,Y,Z = zip(*np_pcd)
 
 fig = go.Figure()
 fig.add_trace(go.Scatter3d(x=X, y=Y, z=Z, mode='markers',marker=dict(size=0.5,color="blue")))
