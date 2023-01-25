@@ -4,10 +4,12 @@ import os
 import struct
 from numpy.linalg import eig
 import plotly.graph_objects as go
+import time
 
+st = time.time()
 
 #Select file
-path = os.path.join(os.path.expanduser('~'), 'Documents', 'kitti', 'dataset','sequences','12','velodyne')
+path = os.path.join(os.path.expanduser('~'), 'Documents', 'kitti', 'dataset','sequences','04','velodyne')
 filename= "000000.bin"
 
 size_float = 4
@@ -53,7 +55,7 @@ def normal_cloud(cloud_points, nb_neighbor):
     return normal_vects
 
 # Define the list of normal vector
-nb_neighbor =6
+nb_neighbor = 8
 list_normal = normal_cloud(np_pcd,nb_neighbor)
 U,V,W= zip(*list_normal)
 
@@ -75,6 +77,10 @@ fig.update_layout(
 
 fig.show()
 
+et = time.time()
 
+# get the execution time
+elapsed_time = et - st
+print('Execution time:', elapsed_time, 'seconds')
 
 
