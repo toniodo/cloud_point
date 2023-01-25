@@ -24,8 +24,9 @@ np_pcd = np.asarray(list_pcd)
 pcd = o3d.geometry.PointCloud()
 v3d = o3d.utility.Vector3dVector
 pcd.points = v3d(np_pcd)
-o3d.io.write_point_cloud("cloud_point.pcd", pcd)
+o3d.io.write_point_cloud("pcd_files/cloud_point.pcd", pcd)
 
+"""
 # Normal is calculated using PCA
 def cal_normal(index_pt,points):
     neighboors = np.concatenate((points[0:index_pt],points[(index_pt+1):]))
@@ -41,7 +42,7 @@ for i in range(len(np_pcd)):
     normal_vect.append(cal_normal(i,np_pcd))
 print("OK")
 
-
+"""
 
 
 
