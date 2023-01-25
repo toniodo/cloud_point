@@ -7,7 +7,7 @@ import plotly.graph_objects as go
 
 
 #Select file
-path = os.path.join(os.path.expanduser('~'), 'Documents', 'kitti', 'dataset','sequences','00','velodyne')
+path = os.path.join(os.path.expanduser('~'), 'Documents', 'kitti', 'dataset','sequences','12','velodyne')
 filename= "000000.bin"
 
 size_float = 4
@@ -31,6 +31,7 @@ o3d.io.write_point_cloud("pcd_files/cloud_point.pcd", pcd)
 
 # Normal is calculated using PCA
 def cal_normal(index_pt,points):
+    current_point = points[index_pt]
     neighboors = np.concatenate((points[0:index_pt],points[(index_pt+1):]))
     # Calculate the covariance matrix
     M = np.cov(np.transpose(neighboors))
@@ -39,7 +40,11 @@ def cal_normal(index_pt,points):
     l = list(l)
     index_min = l.index(min(l))
     normal_raw = w[index_min]
-    return normal_raw/np.linalg.norm(normal_raw)
+    # To have outgoing normal (from object)
+    if np.dot(normal_raw, current_point)>0:
+        return -normal_raw/np.linalg.norm(normal_raw)
+    else:
+        return normal_raw/np.linalg.norm(normal_raw)
 
 def normal_cloud(cloud_points, nb_neighbor):
     normal_vects = []
@@ -66,7 +71,7 @@ fig.update_layout(
     scene = dict(
         xaxis = dict(nticks=4, range=[-80,80],),
         yaxis = dict(nticks=4, range=[-80,80],),
-        zaxis = dict(nticks=4, range=[-80,80],),))
+        zaxis = dict(nticks=4, range=[-80,80],)))
 
 fig.show()
 
