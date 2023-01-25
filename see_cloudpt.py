@@ -3,9 +3,11 @@ import numpy as np
 import os
 import struct
 from numpy.linalg import eig
+import matplotlib.pyplot as plt
+from mpl_toolkits.mplot3d import Axes3D
 
 #Select file
-path = os.path.join(os.path.expanduser('~'), 'Documents', 'kitti', 'dataset','sequences','03','velodyne')
+path = os.path.join(os.path.expanduser('~'), 'Documents', 'kitti', 'dataset','sequences','00','velodyne')
 filename= "000000.bin"
 
 size_float = 4
@@ -26,23 +28,39 @@ v3d = o3d.utility.Vector3dVector
 pcd.points = v3d(np_pcd)
 o3d.io.write_point_cloud("pcd_files/cloud_point.pcd", pcd)
 
-"""
+
 # Normal is calculated using PCA
 def cal_normal(index_pt,points):
     neighboors = np.concatenate((points[0:index_pt],points[(index_pt+1):]))
     # Calculate the covariance matrix
-    M = np.cov(neighboors)
+    M = np.cov(np.transpose(neighboors))
     l,w = eig(M)
     # Normal vector correspounds to the smallest eigenvalue
+    l = list(l)
     index_min = l.index(min(l))
-    return w[index_min]
+    normal_raw = w[index_min]
+    return normal_raw/np.linalg.norm(normal_raw)
 
-normal_vect = []
-for i in range(len(np_pcd)):
-    normal_vect.append(cal_normal(i,np_pcd))
-print("OK")
+def normal_cloud(cloud_points, nb_neighbor):
+    normal_vects = []
+    for i in range(len(np_pcd)-nb_neighbor-1):
+        normal_vects.append(cal_normal(0, cloud_points[i:i+nb_neighbor+1]))
+    return normal_vects
 
-"""
+# Define the list of normal vectors
+list_normal = normal_cloud(np_pcd,6)
+U,V,W= zip(*list_normal)
+
+# Define the origin of points
+X,Y,Z = zip(*np_pcd[:-6])
+
+fig = plt.figure().add_subplot(projection='3d')
+plt.quiver(X, Y, Z, U, V, W)
+plt.show()
+
+
+    
+
 
 
 
