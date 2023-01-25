@@ -3,8 +3,8 @@ import numpy as np
 import os
 import struct
 from numpy.linalg import eig
-import matplotlib.pyplot as plt
-from mpl_toolkits.mplot3d import Axes3D
+import plotly.graph_objects as go
+
 
 #Select file
 path = os.path.join(os.path.expanduser('~'), 'Documents', 'kitti', 'dataset','sequences','00','velodyne')
@@ -47,19 +47,28 @@ def normal_cloud(cloud_points, nb_neighbor):
         normal_vects.append(cal_normal(0, cloud_points[i:i+nb_neighbor+1]))
     return normal_vects
 
-# Define the list of normal vectors
-list_normal = normal_cloud(np_pcd,6)
+# Define the list of normal vector
+nb_neighbor =6
+list_normal = normal_cloud(np_pcd,nb_neighbor)
 U,V,W= zip(*list_normal)
 
 # Define the origin of points
-X,Y,Z = zip(*np_pcd[:-6])
+X,Y,Z = zip(*np_pcd[:-(nb_neighbor+1)])
 
-fig = plt.figure().add_subplot(projection='3d')
-plt.quiver(X, Y, Z, U, V, W)
-plt.show()
+fig = go.Figure()
+fig.add_trace(go.Scatter3d(x=X, y=Y, z=Z, mode='markers',marker=dict(size=0.5,color="blue")))
 
+# Vectors are here respresented with two points : origin and direction
+fig.add_trace(go.Scatter3d(x=np.add(X,U), y=np.add(Y,V), z=np.add(Z,W), mode='markers',marker=dict(size=0.5,color="red")))
 
-    
+# To set an uniform scale on all axes
+fig.update_layout(
+    scene = dict(
+        xaxis = dict(nticks=4, range=[-80,80],),
+        yaxis = dict(nticks=4, range=[-80,80],),
+        zaxis = dict(nticks=4, range=[-80,80],),))
+
+fig.show()
 
 
 
